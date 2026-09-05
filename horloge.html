@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Horloge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@300;500;700&family=Fraunces:wght@300;600;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --grad-a: #1b1035;
+    --grad-b: #3a1c5c;
+    --grad-c: #ff6b6b;
+    --text-color: #f5f2ff;
+    --accent: #ff9d6b;
+    --font-clock: 'Space Grotesk', sans-serif;
+    --ui-bg: rgba(255,255,255,0.08);
+    --ui-border: rgba(255,255,255,0.18);
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin:0; padding:0; height:100%; width:100%;
+    overflow:hidden;
+    font-family: var(--font-clock);
+  }
+
+  body{
+    background: linear-gradient(135deg, var(--grad-a), var(--grad-b) 55%, var(--grad-c));
+    background-size: 200% 200%;
+    animation: drift 22s ease-in-out infinite;
+    color: var(--text-color);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    user-select:none;
+    -webkit-user-select:none;
+    transition: color 0.4s ease;
+  }
+
+  @keyframes drift{
+    0%{ background-position: 0% 50%; }
+    50%{ background-position: 100% 50%; }
+    100%{ background-position: 0% 50%; }
+  }
+
+  .stage{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap: clamp(8px, 1.6vw, 18px);
+    text-align:center;
+    padding: 0 24px;
+  }
+
+  #clock{
+    font-size: clamp(64px, 16vw, 220px);
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 8px 40px rgba(0,0,0,0.25);
+  }
+
+  #date{
+    font-size: clamp(14px, 2vw, 22px);
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    opacity: 0.75;
+    text-transform: capitalize;
+  }
+
+  /* ---------- bouton customiser ---------- */
+  #toggleBtn{
+    position: fixed;
+    bottom: 22px;
+    right: 22px;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: var(--ui-bg);
+    border: 1px solid var(--ui-border);
+    backdrop-filter: blur(10px);
+    color: var(--text-color);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    z-index: 50;
+    transition: transform 0.3s ease, background 0.2s ease;
+  }
+  #toggleBtn:hover{ background: rgba(255,255,255,0.16); }
+  #toggleBtn svg{ width:22px; height:22px; transition: transform 0.4s ease; }
+  #toggleBtn.open svg{ transform: rotate(75deg); }
+
+  /* ---------- panneau ---------- */
+  #panel{
+    position: fixed;
+    bottom: 80px;
+    right: 22px;
+    width: 260px;
+    max-height: 70vh;
+    overflow-y: auto;
+    background: rgba(15, 10, 30, 0.55);
+    border: 1px solid var(--ui-border);
+    backdrop-filter: blur(16px);
+    border-radius: 16px;
+    padding: 18px;
+    display:flex;
+    flex-direction:column;
+    gap: 16px;
+    color: #f5f2ff;
+    font-family: 'Space Grotesk', sans-serif;
+    z-index: 49;
+    opacity:0;
+    transform: translateY(10px) scale(0.97);
+    pointer-events:none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+  #panel.open{
+    opacity:1;
+    transform: translateY(0) scale(1);
+    pointer-events:auto;
+  }
+
+  #panel h3{
+    margin:0 0 2px 0;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.55;
+    font-weight: 500;
+  }
+
+  .swatches{
+    display:flex;
+    flex-wrap:wrap;
+    gap: 8px;
+  }
+  .swatch{
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    cursor:pointer;
+    border: 2px solid transparent;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+  .swatch:hover{ transform: scale(1.08); }
+  .swatch.active{ border-color: #fff; }
+
+  .fonts{
+    display:flex;
+    flex-direction:column;
+    gap: 6px;
+  }
+  .font-opt{
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid transparent;
+    cursor:pointer;
+    font-size: 14px;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .font-opt:hover{ background: rgba(255,255,255,0.12); }
+  .font-opt.active{ border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.14); }
+
+  .row{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .row span{ font-size: 13px; opacity: 0.7; }
+  input[type="color"]{
+    -webkit-appearance:none;
+    width: 30px; height: 30px;
+    border:none; border-radius: 8px;
+    background:none;
+    cursor:pointer;
+    padding:0;
+  }
+  input[type="color"]::-webkit-color-swatch-wrapper{ padding:0; }
+  input[type="color"]::-webkit-color-swatch{ border-radius:8px; border:1px solid rgba(255,255,255,0.3); }
+
+  .hint{
+    font-size: 11px;
+    opacity: 0.45;
+    line-height: 1.4;
+    text-align:center;
+  }
+
+  #panel::-webkit-scrollbar{ width:6px; }
+  #panel::-webkit-scrollbar-thumb{ background: rgba(255,255,255,0.2); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+  <div class="stage">
+    <div id="clock">--:--:--</div>
+    <div id="date">--</div>
+  </div>
+
+  <button id="toggleBtn" aria-label="Personnaliser">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"></circle>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+    </svg>
+  </button>
+
+  <div id="panel">
+    <div>
+      <h3>Fond</h3>
+      <div class="swatches" id="gradientSwatches"></div>
+    </div>
+
+    <div>
+      <h3>Couleurs personnalisées</h3>
+      <div class="row">
+        <span>Teinte 1</span>
+        <input type="color" id="colorA" value="#1b1035">
+      </div>
+      <div class="row">
+        <span>Teinte 2</span>
+        <input type="color" id="colorB" value="#3a1c5c">
+      </div>
+      <div class="row">
+        <span>Teinte 3</span>
+        <input type="color" id="colorC" value="#ff6b6b">
+      </div>
+    </div>
+
+    <div>
+      <h3>Police</h3>
+      <div class="fonts" id="fontList"></div>
+    </div>
+
+    <div>
+      <h3>Texte</h3>
+      <div class="row">
+        <span>Couleur du texte</span>
+        <input type="color" id="textColor" value="#f5f2ff">
+      </div>
+    </div>
+
+    <div class="hint">Triple-clic n'importe où pour passer en plein écran</div>
+  </div>
+
+<script>
+  // ---------- Horloge ----------
+  const clockEl = document.getElementById('clock');
+  const dateEl = document.getElementById('date');
+
+  function pad(n){ return n.toString().padStart(2,'0'); }
+
+  function updateClock(){
+    const now = new Date();
+    clockEl.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    dateEl.textContent = now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // ---------- Dégradés prédéfinis ----------
+  const gradients = [
+    { a:'#1b1035', b:'#3a1c5c', c:'#ff6b6b', name:'Aurore' },
+    { a:'#020024', b:'#090979', c:'#00d4ff', name:'Nuit électrique' },
+    { a:'#0f2027', b:'#203a43', c:'#2c5364', name:'Océan profond' },
+    { a:'#232526', b:'#414345', c:'#8e9eab', name:'Graphite' },
+    { a:'#ff9a9e', b:'#fad0c4', c:'#fbc2eb', name:'Pêche douce' },
+    { a:'#0f0c29', b:'#302b63', c:'#24243e', name:'Cosmos' },
+    { a:'#f7971e', b:'#ffd200', c:'#f7971e', name:'Coucher de soleil' },
+    { a:'#1e3c72', b:'#2a5298', c:'#7303c0', name:'Violet royal' },
+    { a:'#134e5e', b:'#71b280', c:'#134e5e', name:'Forêt' },
+    { a:'#e0eafc', b:'#cfdef3', c:'#8fd3f4', name:'Ciel clair' }
+  ];
+
+  const swatchContainer = document.getElementById('gradientSwatches');
+  gradients.forEach((g, i) => {
+    const el = document.createElement('div');
+    el.className = 'swatch';
+    el.title = g.name;
+    el.style.background = `linear-gradient(135deg, ${g.a}, ${g.b}, ${g.c})`;
+    el.addEventListener('click', () => applyGradient(g));
+    swatchContainer.appendChild(el);
+  });
+
+  const colorA = document.getElementById('colorA');
+  const colorB = document.getElementById('colorB');
+  const colorC = document.getElementById('colorC');
+
+  function applyGradient(g){
+    document.documentElement.style.setProperty('--grad-a', g.a);
+    document.documentElement.style.setProperty('--grad-b', g.b);
+    document.documentElement.style.setProperty('--grad-c', g.c);
+    colorA.value = toHex(g.a);
+    colorB.value = toHex(g.b);
+    colorC.value = toHex(g.c);
+  }
+
+  function toHex(c){
+    // les valeurs sont déjà en hex dans notre liste
+    return c;
+  }
+
+  colorA.addEventListener('input', () => document.documentElement.style.setProperty('--grad-a', colorA.value));
+  colorB.addEventListener('input', () => document.documentElement.style.setProperty('--grad-b', colorB.value));
+  colorC.addEventListener('input', () => document.documentElement.style.setProperty('--grad-c', colorC.value));
+
+  // ---------- Couleur du texte ----------
+  const textColorInput = document.getElementById('textColor');
+  textColorInput.addEventListener('input', () => {
+    document.documentElement.style.setProperty('--text-color', textColorInput.value);
+  });
+
+  // ---------- Polices ----------
+  const fonts = [
+    { name: 'Space Grotesk', css: "'Space Grotesk', sans-serif" },
+    { name: 'Playfair Display', css: "'Playfair Display', serif" },
+    { name: 'JetBrains Mono', css: "'JetBrains Mono', monospace" },
+    { name: 'Fraunces', css: "'Fraunces', serif" },
+    { name: 'Bebas Neue', css: "'Bebas Neue', sans-serif" },
+    { name: 'System', css: "-apple-system, Segoe UI, Roboto, sans-serif" }
+  ];
+
+  const fontList = document.getElementById('fontList');
+  fonts.forEach((f, i) => {
+    const el = document.createElement('div');
+    el.className = 'font-opt';
+    if(i === 0) el.classList.add('active');
+    el.textContent = f.name;
+    el.style.fontFamily = f.css;
+    el.addEventListener('click', () => {
+      document.documentElement.style.setProperty('--font-clock', f.css);
+      document.querySelectorAll('.font-opt').forEach(o => o.classList.remove('active'));
+      el.classList.add('active');
+    });
+    fontList.appendChild(el);
+  });
+
+  // ---------- Panneau customisation ----------
+  const toggleBtn = document.getElementById('toggleBtn');
+  const panel = document.getElementById('panel');
+
+  toggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    panel.classList.toggle('open');
+    toggleBtn.classList.toggle('open');
+  });
+
+  document.addEventListener('click', (e) => {
+    if(!panel.contains(e.target) && e.target !== toggleBtn && !toggleBtn.contains(e.target)){
+      panel.classList.remove('open');
+      toggleBtn.classList.remove('open');
+    }
+  });
+
+  // ---------- Triple-clic = plein écran ----------
+  let clickCount = 0;
+  let clickTimer = null;
+
+  document.addEventListener('click', (e) => {
+    if(panel.contains(e.target) || toggleBtn.contains(e.target)) return;
+
+    clickCount++;
+    if(clickCount === 1){
+      clickTimer = setTimeout(() => { clickCount = 0; }, 500);
+    }
+    if(clickCount === 3){
+      clearTimeout(clickTimer);
+      clickCount = 0;
+      toggleFullscreen();
+    }
+  });
+
+  function toggleFullscreen(){
+    if(!document.fullscreenElement){
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+</script>
+</body>
+</html>
